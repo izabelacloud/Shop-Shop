@@ -6,7 +6,16 @@ import { QUERY_PRODUCTS } from "../utils/queries";
 import spinner from '../assets/spinner.gif'
 
 import { useStoreContext } from "../utils/GlobalState";
-import { UPDATE_PRODUCTS } from "../utils/actions.js";
+
+import Cart from '../components/Cart';
+
+
+import {
+  REMOVE_FROM_CART,
+  UPDATE_CART_QUANTITY,
+  ADD_TO_CART,
+  UPDATE_PRODUCTS,
+} from '../utils/actions';
 
 
 function Detail() {
@@ -25,13 +34,14 @@ function Detail() {
   // }, [products, id]);
 
   const [state, dispatch] = useStoreContext();
+
   const { id } = useParams();
 
   const [currentProduct, setCurrentProduct] = useState({});
 
   const { loading, data } = useQuery(QUERY_PRODUCTS);
 
-  const { products } = state;
+  const { products, cart } = state;
 
   useEffect(() => {
     if(products.length) {
@@ -44,6 +54,33 @@ function Detail() {
 
     }
   }, [products, data, dispatch, id]);
+
+
+
+  const addToCart = () => {
+    const itemInCart = cart.find((cartItem) => cartItem._id === id);
+
+    if (itemInCart) {
+      dispatch({
+        type: UPDATE_CART_QUANTITY,
+        _id: id,
+        purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1
+      });
+    } else {
+      dispatch({
+        type: ADD_TO_CART,
+        product: { ...currentProduct, purchaseQuantity: 1 }
+      });
+    }
+  };
+
+
+  const removeFromCart = () => {
+    dispatch({
+      type: REMOVE_FROM_CART,
+      _id: currentProduct._id
+    })
+  }
 
 
 
@@ -65,12 +102,16 @@ function Detail() {
             <strong>Price:</strong>
             ${currentProduct.price}
             {" "}
-            <button>
-              Add to Cart
+            <button onClick={addToCart}>
+              Add to cart
             </button>
-            <button>
-              Remove from Cart
-            </button>
+
+            <button 
+            disabled={!cart.find(p => p._id === currentProduct._id)} 
+            onClick={removeFromCart}
+          >
+            Remove from Cart
+          </button>
           </p>
 
           <img
@@ -82,6 +123,7 @@ function Detail() {
       {
         loading ? <img src={spinner} alt="loading" /> : null
       }
+      <Cart />
     </>
   );
 };
